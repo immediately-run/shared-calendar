@@ -79,6 +79,9 @@ function EventEditor({
         repeat,
         until: repeat !== 'none' && until ? until : undefined,
         attachments,
+        // A new event is created at save time, not when the form opened (else it
+        // shows as "edited" the moment it is added).
+        created: isNew ? now : draft.created,
         updated: now,
       });
     } finally {

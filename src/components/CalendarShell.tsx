@@ -148,6 +148,8 @@ function CalendarShell({ cal }: { cal: CalendarApi }) {
             onOpen={cal.openShared}
             onPrivate={cal.usePrivate}
             onClose={() => setMenuOpen(false)}
+            displayName={cal.displayName}
+            onDisplayName={(n) => void cal.setDisplayName(n)}
           />
         }
       />

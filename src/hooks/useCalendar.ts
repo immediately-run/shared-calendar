@@ -31,8 +31,11 @@ export interface CalendarApi {
   /** A transient message for the user (error or info). */
   notice: string | null;
   readOnly: boolean;
-  /** Who is writing — `user.login`, or "someone" when the host gave no login. */
+  /** Who is writing — `user.login`, else the "Your name" setting, else "someone". */
   login: string;
+  /** The private "Your name" setting (used only when the host gives no login). */
+  displayName: string;
+  setDisplayName(name: string): Promise<void>;
   createShared(): Promise<void>;
   openShared(): Promise<void>;
   usePrivate(): Promise<void>;
@@ -65,7 +68,8 @@ const describe = (e: unknown, fallback: string): string => {
 
 export function useCalendar(): CalendarApi {
   const auth = useAuth();
-  const login = auth.user?.login || 'someone';
+  const [displayName, setDisplayNameState] = useState('');
+  const login = auth.user?.login || displayName.trim() || 'someone';
 
   const [phase, setPhase] = useState<Phase>('booting');
   const [store, setStore] = useState<Store | null>(null);
@@ -125,6 +129,7 @@ export function useCalendar(): CalendarApi {
         const cfg = await readJson<CalendarConfig>(configPath(cfgStore), {});
         cfgRef.current = { store: cfgStore, cfg };
         if (!alive) return;
+        if (cfg.displayName) setDisplayNameState(cfg.displayName);
         if (cfg.mode === 'shared' && cfg.spaceId) {
           const s = await openRememberedSpace(cfg.spaceId);
           if (!alive) return;
@@ -204,6 +209,14 @@ export function useCalendar(): CalendarApi {
   }, [activate, login, writeConfig]);
 
   const chooseStore = useCallback(() => setPhase('choose'), []);
+
+  const setDisplayName = useCallback(
+    async (name: string) => {
+      setDisplayNameState(name);
+      await writeConfig({ displayName: name.trim() || undefined });
+    },
+    [writeConfig],
+  );
 
   // ── mutations ────────────────────────────────────────────────────────────
   const reload = useCallback(async () => {
@@ -288,6 +301,8 @@ export function useCalendar(): CalendarApi {
     notice,
     readOnly: store?.mode === 'ro',
     login,
+    displayName,
+    setDisplayName,
     createShared,
     openShared,
     usePrivate,

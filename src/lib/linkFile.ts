@@ -96,7 +96,10 @@ export async function linkFileFromSpace(store: Store, source: 'this' | 'another'
   } catch (e) {
     const code = codeOf(e);
     if (code === 'cancelled') return null;
-    throw new LinkError(code === 'forbidden' ? 'forbidden' : 'other', messageOf(e, 'The file picker failed.'));
+    if (code === 'forbidden') {
+      throw new LinkError('forbidden', 'The host refused the file picker: this app is not allowed to invoke pick-file here.');
+    }
+    throw new LinkError('other', messageOf(e, 'The file picker failed.'));
   }
   const rel = safeRel(res?.relPath);
   if (!rel) throw new LinkError('other', 'The picker returned a path this app will not accept.');

@@ -63,4 +63,6 @@ export interface CalendarConfig {
   spaceId?: string;
   spaceName?: string;
   seeded?: boolean;
+  /** Shown as the writer's name when the host gives the app no login. */
+  displayName?: string;
 }
