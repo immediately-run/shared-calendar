@@ -1,135 +1,125 @@
-# immediately.run — starter template
+# Shared calendar
 
-A ready-to-run starter for building apps on
-[immediately.run](https://immediately.run): React + TypeScript + Vite, wired to
-the brand design system, with the project layout immediately.run expects.
+A calendar for a family or a team, built as an [immediately.run](https://immediately.run)
+app. **Events are files** — one JSON file per event in a space you share — so
+everyone with access to the space sees the same calendar, and any day or event
+can carry photos and documents.
 
-## Try it instantly
+## Try it
 
-Try this template on [immediately.run](https://immediately.run/present/github/immediately-run/new-project-template/main/files/src/App.tsx)
+Open it on immediately.run:
 
-> Using this as a starting point for your own app? After you push to your repo,
-> update the link above to
-> `https://immediately.run/present/github/<owner>/<repo>/<ref>/files/src/App.tsx`.
+**<https://immediately.run/present/github/immediately-run/shared-calendar/main/files/src/App.tsx>**
 
-## Use this template
+On first run it asks where the calendar should live:
 
-1. Create a new repo from this template (or copy the files).
-2. `npm install`
-3. `npm run dev` and start editing `src/App.tsx`.
-4. Push to GitHub and open it on immediately.run with the link above.
+- **Create a shared calendar** — makes a new space named "Calendar" (the host
+  shows a consent dialog). Then share that space with people from
+  immediately.run's Spaces page; the app itself cannot invite anyone.
+- **Open an existing one** — pick a space that was shared with you (or one of
+  your own) through the host's picker.
+- **Keep it private** — stored in your private per-app folder, with zero
+  prompts. Comes with a few sample events around today. You can switch to a
+  shared calendar later from the badge in the top bar.
 
-## Fast loading on immediately.run (auto-cache)
+The choice is remembered and re-opened at the next launch.
 
-immediately.run normally reads your sources from the GitHub API, which is slow
-and rate-limited for anonymous visitors. This template ships a GitHub Action
-([`.github/workflows/cache.yml`](./.github/workflows/cache.yml)) that, on every
-push to `main`, builds a pre-cached zip of your repo and publishes it to your
-repo's **own GitHub Pages**. immediately.run finds it automatically at
-`https://<owner>.github.io/<repo>/cached_repositories/main.zip` and loads from
-there — falling back to the API if it's missing.
+## What it does
 
-The cache also embeds a manifest sidecar, so visitors can push edits back to
-GitHub even when the app was loaded from the zip.
+- **Month** view (default), **week** view and a **day** agenda; Today, previous
+  and next. On a phone the month grid shows colored dots and a tap opens the
+  day's agenda as a bottom sheet.
+- Events have a title, date, an optional start/end time (or all-day), notes, a
+  color tag, and remember who added them (`by`).
+- **Repeats**: simple weekly or monthly rules with an optional end date. A
+  repeating event is a single file; its occurrences are expanded in the client.
+  Editing or deleting applies to the whole series.
+- **Attachments** on an event, two ways:
+  1. **Upload from device** — the file's bytes are written into the calendar's
+     storage (`attachments/<eventId>/<name>`). Images show as thumbnails;
+     PDFs and other files get Open / Save links.
+  2. **Link a file from a space** — the platform's `pick-file` task browses a
+     space and the event stores a *content reference* to the file (nothing is
+     copied). Each viewer resolves it with their own consent (a "Show" button)
+     before it is displayed.
+- **Live updates**: a shared calendar polls the month on screen every 3 seconds,
+  so other members' changes appear without a reload.
+- Read-only members see everything but get no editing controls.
 
-### Enable the cache (one-time)
+## How data is stored
 
-For a repo in your **own** GitHub account or org, there's a single one-time step:
+Inside the chosen store (a space, or your private app folder):
 
-1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
-2. Push to `main` (or re-run the **Cache for immediately.run** workflow from the
-   Actions tab).
+```
+events/<YYYY-MM>/<eventId>.json      one event per file (repeats live in the month of their first occurrence)
+attachments/<eventId>/<filename>     uploaded bytes
+```
 
-That's it — no tokens and no secrets to configure. The workflow builds the zip and
-publishes it to your repo's Pages; immediately.run finds it automatically on the
-next load. The first publish can lag a push by up to ~10 minutes of GitHub Pages
-CDN caching. If the app still loads from the API, check that the workflow run
-succeeded and that Pages shows a green **github-pages** deployment.
+`<private>/config.json` remembers the chosen store (`mode`, `spaceId`).
+Because each event is its own file, two people editing different events never
+overwrite each other; the last writer of the *same* event wins.
 
-> **immediately-run org repos** skip even that step: the org's internal **deploy
-> GitHub App** self-provisions Pages on the first run (it holds Pages +
-> Administration write and its `DEPLOY_APP_ID` / `DEPLOY_APP_PRIVATE_KEY` are org
-> secrets). That App is org-internal — repos outside the org neither have nor need
-> it, and `cache.yml` automatically falls back to the manual step above.
+An event file looks like:
 
-### Always run the newest commit
-
-By default the cached version is served even if it's a few minutes behind
-`main`. If your app must always reflect the very latest commit, add this to
-`package.json`:
-
-```jsonc
+```json
 {
-  "immediately.run": {
-    "requireLatest": true
-  }
+  "id": "mtbyqtls-1pgu6y",
+  "title": "Dentist",
+  "date": "2026-08-30",
+  "allDay": false,
+  "start": "09:00",
+  "end": "09:45",
+  "notes": "Bring the insurance card.",
+  "color": "sky",
+  "repeat": "none",
+  "attachments": [
+    { "kind": "file", "id": "…", "name": "referral.pdf", "relPath": "attachments/mtbyqtls-1pgu6y/referral.pdf", "type": "application/pdf", "size": 48213 },
+    { "kind": "ref", "id": "…", "name": "map.png", "ref": { "$cap": "file", "mountId": "space:…", "relPath": "trips/map.png", "mode": "ro" } }
+  ],
+  "by": "octocat",
+  "created": "2026-08-27T19:00:00.000Z",
+  "updated": "2026-08-27T19:00:00.000Z"
 }
 ```
 
-immediately.run still boots instantly from the cache, then checks in the
-background (one API request) whether the cache is current and, if not, reloads
-from GitHub.
+## Multi-user notes
 
-## How it's organized
+- Sharing is the host's job: create or open a space here, then manage its
+  members on immediately.run's Spaces page. A member's role (read-only /
+  read-write) is what the app sees as the mount mode.
+- Linked files are references into *some* space. When another member opens an
+  event with a linked file, the host asks them once whether this app may read
+  that file; declining (or a file that no longer exists) just shows a note.
+- There are no remote change events on shared spaces, so the app polls the
+  visible month's directory (and the `events/` root, for new months) every 3 s.
 
-immediately.run renders the **default export of `src/App.tsx`** — that's the
-entry point, not `main.tsx`.
+## SDK features used
 
-```
-src/
-  main.tsx              # local vite dev/build entry only — immediately.run IGNORES this
-  App.tsx               # ROOT: default export + imports the global CSS
-  index.css             # fonts, design tokens (dark + light), resets
-  App.css               # layout + component styles
-  mdx.d.ts              # type shim so `import X from './x.mdx'` works
-  components/           # one default-exported React component per file
-  data/                 # typed data arrays (NO components/JSX here)
-  hooks/                # custom hooks (NO components here)
-  assets/               # images you import, e.g. import logo from './assets/logo.png'
-```
+`@immediately-run/sdk` (subpath imports only):
 
-The included page shows the core patterns: a data array mapped to cards
-(`data/features.ts` → `components/Features.tsx`), a custom hook
-(`hooks/useTheme.ts` → `components/ThemeSwitch.tsx`), and local React state
-(`components/Counter.tsx`).
+- `mounts`: `openSettings`, `createSpace`, `requestMount`, `mount('space:<id>')`,
+  `makeContentRef`, `resolveContentRef`
+- `tasks`: `invokeTask('pick-file', …)`, `capDir` (imported lazily — the module
+  registers a task-input listener at evaluation and needs the host)
+- `hooks`: `useObjectUrl` (with an `fs` fallback under `vite dev`)
+- `auth`: `useAuth` for the writer's login
+- `formFactor`: `useFormFactor` (plus a media query off-host)
+- the async `fs` module, including binary `writeFile`/`readFile`
 
-## Filesystem access (`fs`)
-
-immediately.run apps can read and write a filesystem by importing `fs` (async
-only — `fs.promises.*` and callback style). This template has local-dev support
-for it built in via [`@immediately-run/dev-fs`](https://github.com/immediately-run/dev-fs),
-a Vite plugin (already wired into `vite.config.ts`) that bridges the same
-filesystem to your real local disk during `vite dev`. See that repo for the
-supported API and details.
-
-```ts
-import fs from 'fs'
-
-await fs.promises.writeFile('/data/notes.txt', 'hello', 'utf8')
-const text = await fs.promises.readFile('/data/notes.txt', 'utf8')
-```
-
-`main.tsx` runs a one-off round-trip smoke test in dev — check the browser
-console for the `[dev-fs]` group, and delete it freely.
-
-## The rules that keep it working on immediately.run
-
-See [`CLAUDE.md`](./CLAUDE.md) for the full list. The essentials:
-
-- **Global CSS is imported from `App.tsx`, never only from `main.tsx`.**
-- **A file that exports a component exports *only* components** — data, consts,
-  and helpers go in `data/`, `hooks/`, or `lib/`. `npm run lint` enforces this.
-- **Pull colors, fonts, radii, and shadows from the tokens in `index.css`**
-  rather than hard-coding values.
-
-## Develop
-
-Requires Node.js 20.19+ or 22.12+.
+## Local development
 
 ```bash
 npm install
-npm run dev      # local dev server
-npm run build    # tsc -b && vite build — must pass with no type errors
-npm run lint     # eslint — enforces the React Fast Refresh / HMR rule
-npm run preview  # serve the production build
+npm run dev      # http://localhost:5173 — persistence goes to ./devfs-playground (git-ignored)
+npm run build    # type-check + production build
+npm run lint     # eslint, incl. the React Fast Refresh rule
 ```
+
+Under `vite dev` there is no host, so the shared-store options are stubbed to a
+local folder, and "Link a file from a space" reports that it needs the host.
+To exercise the real thing, run the working tree inside the host with the CLI:
+`immediately.run dev . --origin https://immediately.run`.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).

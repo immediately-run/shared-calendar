@@ -1,6 +1,17 @@
-# Working in this repo
+# Working in this repo — shared-calendar
 
-This is an **immediately.run app**: React + TypeScript that loads from GitHub and
+This is an **immediately.run app**: a shared calendar for a family or team. Events
+are one-JSON-file-per-event under `events/<YYYY-MM>/` in a space (or the user's
+private app folder); attachments are bytes under `attachments/<eventId>/` or
+content references to files in other spaces. Layout of the code:
+
+- `src/App.tsx` — entry (imports the CSS, mounts the calendar).
+- `src/hooks/useCalendar.ts` — boot, first-run chooser, polling, every mutation.
+- `src/lib/store.ts` — the canonical persistence wrapper (private store, spaces,
+  `pollDir`); `src/lib/events.ts` / `attachments.ts` / `linkFile.ts` / `recur.ts`.
+- `src/components/*` — one component per file.
+
+It is React + TypeScript that loads from GitHub and
 transpiles in the browser (no server, no build step at runtime). Keep the rules
 below or the app breaks *only* on immediately.run while still looking fine in
 local `vite dev` — the most common silent failure.
