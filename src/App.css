@@ -102,6 +102,14 @@ html[data-theme="light"] .c-slate  { --ev: #5d5670; --ev-soft: rgba(93,86,112,.1
   .themeswitch span:not(.ic) { display: none; }
   .themeswitch { padding: 8px 10px; }
 }
+/* Phones: the month title and the view switcher each get a full row, else the
+   title is squeezed to a single letter next to Month/Week/Day. */
+@media (max-width: 640px) {
+  .topbar .nav { grid-column: 1 / -1; }
+  .topbar .title { flex: 1; text-align: right; }
+  .topbar .seg { grid-column: 1 / -1; justify-self: stretch; display: flex; }
+  .topbar .seg button { flex: 1; }
+}
 
 /* ---- store menu ---- */
 .menu {
