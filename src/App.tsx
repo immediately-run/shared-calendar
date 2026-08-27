@@ -4,23 +4,29 @@
 // reachable from App.tsx.
 import './index.css';
 import './App.css';
-import Nav from './components/Nav';
-import Hero from './components/Hero';
-import Features from './components/Features';
-import Counter from './components/Counter';
-import Footer from './components/Footer';
+import { useCalendar } from './hooks/useCalendar';
+import Splash from './components/Splash';
+import StoreChooser from './components/StoreChooser';
+import CalendarShell from './components/CalendarShell';
+import Notice from './components/Notice';
 
 function App() {
+  const cal = useCalendar();
   return (
-    <>
-      <Nav />
-      <main className="wrap">
-        <Hero />
-        <Features />
-        <Counter />
-        <Footer />
-      </main>
-    </>
+    <div className="app">
+      {cal.phase === 'booting' && <Splash />}
+      {cal.phase === 'choose' && (
+        <StoreChooser
+          onCreate={cal.createShared}
+          onOpen={cal.openShared}
+          onPrivate={cal.usePrivate}
+          canGoBack={cal.store !== null}
+          onBack={cal.reload}
+        />
+      )}
+      {cal.phase === 'ready' && <CalendarShell cal={cal} />}
+      {cal.notice && <Notice text={cal.notice} onClose={() => cal.setNotice(null)} />}
+    </div>
   );
 }
 
