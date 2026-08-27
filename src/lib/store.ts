@@ -137,29 +137,33 @@ export const newId = (): string =>
  * differs from the last poll. Returns a stop function.
  */
 export function pollDir(dir: string, onChange: () => void, intervalMs = 3000): () => void {
-  let last = '';
+  let last: string | null = null; // null = never polled (an empty dir is a valid '' signature)
   let stopped = false;
+  const signature = async (): Promise<string> => {
+    let names: string[];
+    try {
+      names = await fs.promises.readdir(dir);
+    } catch {
+      return ''; // dir missing yet — the same signature as empty, so its APPEARANCE with content fires
+    }
+    return (
+      await Promise.all(
+        names.map(async (n) => {
+          try {
+            const s = await fs.promises.stat(join(dir, n));
+            return `${n}:${s.mtimeMs}:${s.size}`;
+          } catch {
+            return `${n}:?`;
+          }
+        }),
+      )
+    ).join('|');
+  };
   const tick = async () => {
     if (stopped) return;
-    try {
-      const names = await fs.promises.readdir(dir);
-      const sig = (
-        await Promise.all(
-          names.map(async (n) => {
-            try {
-              const s = await fs.promises.stat(join(dir, n));
-              return `${n}:${s.mtimeMs}:${s.size}`;
-            } catch {
-              return `${n}:?`;
-            }
-          }),
-        )
-      ).join('|');
-      if (last && sig !== last) onChange();
-      last = sig;
-    } catch {
-      /* dir missing yet */
-    }
+    const sig = await signature();
+    if (last !== null && sig !== last) onChange();
+    last = sig;
     if (!stopped) setTimeout(tick, intervalMs);
   };
   void tick();

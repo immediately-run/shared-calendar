@@ -9,10 +9,11 @@
 // later viewer resolves through their own consent (`resolveContentRef`).
 //
 // All SDK calls here need the host; under plain `vite dev` they reject and the UI
-// says so instead of pretending.
+// says so instead of pretending. `@immediately-run/sdk/tasks` is imported LAZILY:
+// it registers a task-input listener at module evaluation, which throws with no
+// host transport (plain `vite dev`) — the same reason the whiteboard defers it.
 import { requestMount, makeContentRef, resolveContentRef } from '@immediately-run/sdk/mounts';
 import type { SandboxMount } from '@immediately-run/sdk/mounts';
-import { invokeTask, capDir } from '@immediately-run/sdk/tasks';
 import type { FileCap } from '@immediately-run/sdk/tasks';
 import { newId, type Store } from './store';
 import type { RefAttachment } from './types';
@@ -79,6 +80,7 @@ export async function linkFileFromSpace(store: Store, source: 'this' | 'another'
 
   let res: PickFileResult;
   try {
+    const { invokeTask, capDir } = await import('@immediately-run/sdk/tasks');
     res = await invokeTask<PickFileResult>('pick-file', {
       mode: 'open-file',
       roots: [capDir({ mountId, relPath: '' }, { mode: 'ro' })],

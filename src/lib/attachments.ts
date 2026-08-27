@@ -24,8 +24,9 @@ export function attachmentKind(att: Attachment): FileKind {
  *  traversal, and never empty. */
 export function sanitizeName(name: string): string {
   const base = name.split(/[\\/]/).pop() ?? '';
-  const cleaned = base
-    .replace(/[\x00-\x1f<>:"|?*]/g, '')
+  const cleaned = Array.from(base)
+    .filter((ch) => ch.charCodeAt(0) >= 32 && !'<>:"|?*'.includes(ch))
+    .join('')
     .replace(/^\.+/, '')
     .trim();
   return cleaned.slice(0, 120) || 'file';
