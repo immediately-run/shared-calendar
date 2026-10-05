@@ -167,7 +167,7 @@ export function useCalendar(): CalendarApi {
     return () => {
       stop();
     };
-  }, [phase, store, visibleMonth, reloadFor]);
+  }, [phase, store, reloadFor]);
 
   // ── choosing / switching the store ───────────────────────────────────────
   const createShared = useCallback(async () => {
