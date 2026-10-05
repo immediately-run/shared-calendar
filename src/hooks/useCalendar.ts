@@ -9,12 +9,12 @@ import {
   openPrivateStore,
   openRememberedSpace,
   pickSharedStore,
-  pollDir,
+  watchDir,
   readJson,
   writeJson,
   type Store,
 } from '../lib/store';
-import { attachmentsDir, deleteEvent, eventsDir, loadAllEvents, monthDir, removeDir, saveEvent } from '../lib/events';
+import { attachmentsDir, deleteEvent, eventsDir, loadAllEvents, removeDir, saveEvent } from '../lib/events';
 import { removeAttachmentBytes, uploadAttachment } from '../lib/attachments';
 import { linkFileFromSpace, LinkError } from '../lib/linkFile';
 import { monthOf, today } from '../lib/dates';
@@ -161,11 +161,11 @@ export function useCalendar(): CalendarApi {
   useEffect(() => {
     if (phase !== 'ready' || !store || store.kind === 'settings') return;
     const onChange = () => void reloadFor(store);
-    const stopMonth = pollDir(monthDir(store, visibleMonth), onChange, 3000);
-    const stopRoot = pollDir(eventsDir(store), onChange, 3000);
+    // R3-901: ONE recursive watch on events/ replaces the month + root polls
+    // (monthDir lives under eventsDir; the relay reports the changed path).
+    const stop = watchDir(eventsDir(store), onChange);
     return () => {
-      stopMonth();
-      stopRoot();
+      stop();
     };
   }, [phase, store, visibleMonth, reloadFor]);
 
