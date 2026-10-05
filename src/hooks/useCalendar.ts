@@ -161,7 +161,7 @@ export function useCalendar(): CalendarApi {
   useEffect(() => {
     if (phase !== 'ready' || !store || store.kind === 'settings') return;
     const onChange = () => void reloadFor(store);
-    // R3-901: ONE recursive watch on events/ replaces the month + root polls
+    // R3-901: one recursive watch on events/ replaces the month + root polls
     // (monthDir lives under eventsDir; the relay reports the changed path).
     const stop = watchDir(eventsDir(store), onChange);
     return () => {
