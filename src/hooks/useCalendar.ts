@@ -76,7 +76,7 @@ export function useCalendar(): CalendarApi {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [visibleMonth, setVisibleMonth] = useState(() => monthOf(today()));
+  const [, setVisibleMonth] = useState(() => monthOf(today()));
 
   // The private config store (opened FIRST at boot and kept, per store.ts).
   const cfgRef = useRef<{ store: Store; cfg: CalendarConfig } | null>(null);
