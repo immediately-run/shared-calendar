@@ -1,5 +1,5 @@
 // The calendar's state machine: boot (private config → remembered space), the
-// first-run chooser, the live store, polling for other members' writes, and every
+// first-run chooser, the live store, the watch for other members' writes, and every
 // mutation. Components render what this returns and never touch `fs` directly.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@immediately-run/sdk/auth';
@@ -51,7 +51,7 @@ export interface CalendarApi {
   /** Drop the attachments folder of an event that was never saved. */
   discardAttachments(eventId: string): Promise<void>;
   setNotice(msg: string | null): void;
-  /** Which month the views are showing — the month directory that gets polled. */
+  /** Which month the views are showing. */
   setVisibleMonth(ym: string): void;
 }
 
@@ -109,9 +109,9 @@ export function useCalendar(): CalendarApi {
       setStore(s);
       if (s.mode === 'rw') {
         try {
-          await ensureDir(eventsDir(s)); // so members' polls have a directory to watch from day one
+          await ensureDir(eventsDir(s)); // so members' watches have a directory to watch from day one
         } catch {
-          /* read-only after all; polling copes with a missing dir too */
+          /* read-only after all; the watcher create-then-watches, so a missing dir copes too */
         }
       }
       await reloadFor(s);
@@ -157,7 +157,7 @@ export function useCalendar(): CalendarApi {
     };
   }, [activate]);
 
-  // ── polling (shared stores get no remote watch events) ───────────────────
+  // ── live updates (the host's watch relay, R3-901) ──
   useEffect(() => {
     if (phase !== 'ready' || !store || store.kind === 'settings') return;
     const onChange = () => void reloadFor(store);

@@ -30,7 +30,7 @@ function CalendarShell({ cal }: { cal: CalendarApi }) {
   const [cursor, setCursor] = useState(today);
   const [daySheet, setDaySheet] = useState(false);
   // The open detail is remembered by (event id, date) and re-derived from the live
-  // event list, so a polled edit shows up and a polled delete closes it.
+  // event list, so a watched edit shows up and a watched delete closes it.
   const [detailKey, setDetailKey] = useState<{ id: string; date: string } | null>(null);
   const [editing, setEditing] = useState<Editing | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -39,7 +39,7 @@ function CalendarShell({ cal }: { cal: CalendarApi }) {
   const rows = useMemo(() => monthGrid(month), [month]);
   const week = useMemo(() => weekOf(cursor), [cursor]);
 
-  // Poll the month on screen (shared stores learn about others' writes this way).
+  // Watch the month on screen (shared stores learn about others' writes this way).
   useEffect(() => cal.setVisibleMonth(month), [cal, month]);
 
   const [from, to] = useMemo(() => {
